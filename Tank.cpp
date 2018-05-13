@@ -1,41 +1,132 @@
 #include "Tank.h"
 #include<math.h>
-#include<stdlib.h>
+#include<sstream>
 #include<iostream>
 using namespace genv;
-Tank::Tank(int X,int Y,int SX,int SY):Widgets(X,Y,SX,SY)
+Tank::Tank(int X,int Y,int SX,int SY,int c,int d,int v0,int h0):Widgets(X,Y,SX,SY)
 {
+shot=false;
+windows_height=h0;
+windows_width=v0;
+t=NULL;
+direction=d;
+costume=c;
+finished=false;
 angle=3.14/180;
-h=0;
+name=new StaticText(X,Y-SX," ",3);
+n=new NumericTextbox(v0/4,5*h0/6,0,90,"Angle",1,'°');
+i=new Indicator(v0/2,5*h0/6,0,100,'%');
+b=new Button(3*v0/4,4*h0/5,15*v0/100,15*v0/200,"Fire",[this]()
+             {
+                t=new Bullett(_x,_y,5,5,angle,direction,windows_width);
+                finished=true;
+             });
+}
+bool Tank::Have_Bullet(){return t; }
+void Tank::SetName(std::string n)
+{
+    name->SetValue(n);
 }
 void Tank::draw()
 {
     int hb1=_x-_size_x;
     int lb1=_x-_size_x/2;
     int lb2=_y-3*_size_y/4;
-    gout<<move_to(hb1,_y)<<color(0,255,0)<<box(2*_size_x,_size_y);
-    gout<<move_to(lb1,lb2)<<color(255,0,0)<<box(_size_x,3*_size_y/4);
+    switch (costume)
+    {
+        case 0:
+            g1=255;
+            b1=r1=0;
+            r2=255;
+            b2=g2=0;
+            r3=g3=0;
+            b3=255;
+            break;
+        case 1:
+            r1=255;
+            g1=b1=0;
+            r2=b2=0;
+            g2=255;
+            r3=g3=0;
+            b3=255;
+            break;
+    }
+    gout<<move_to(hb1,_y)<<color(r1,g1,b1)<<box(2*_size_x,_size_y);
+     gout<<move_to(_x,_y-_size_y/2)<<color(r3,g3,b3)<<line(direction*40*cos(tool->degtorad(direction*angle)),direction*(sin(tool->degtorad(direction*angle))*40));
+    gout<<move_to(lb1,lb2)<<color(r2,g2,b2)<<box(_size_x,3*_size_y/4);
     ///cannon
-    gout<<move_to(_x+_size_x/2,_y-_size_y/2)<<color(0,0,255)<<line((40*cos(angle)-4*(sin(angle))),(sin(angle)*40)+cos(angle)*4);
 
+    name->draw();
+    if(focused)
+    {
+    gout<<move_to(_x-_size_x/4,_y-2*_size_x)<<color(255,0,0)<<line(_size_x/4,_size_x/4)<<line(0,-(_size_x+_size_y))<<genv::move(0,_size_x+_size_y)<<line(_size_x/4,-_size_x/4);
+    n->draw();
+    i->draw();
+    b->draw();
+    }
 
 }
+bool Tank::is_finished(){return finished;}
 void Tank::handle(genv::event ev)
 {
+    if(focused)
+    {
+    if(ev.keycode==key_right)
+        _x+=5;
+    if(ev.keycode==key_left && _x>2*_size_x)
+        _x-=5;
+    angle=tool->StoI(n->GetValue());
+
+
+    name->SetPosition(_x,_y-_size_x);
+    if(i->is_selected(ev.pos_x,ev.pos_y))
+       {
+        if(!n->is_selected(ev.pos_x,ev.pos_y))
+            n->NoFocus();
+        i->handle(ev);
+       }
+  if(n->is_selected(ev.pos_x,ev.pos_y))
+    {
+        if(!i->is_selected(ev.pos_x,ev.pos_y))
+            i->NoFocus();
+        n->handle(ev);
+    }
+    angle=tool->StoI(n->GetValue());
+    b->handle(ev);}
+}
+void Tank::DrawBullets(Tank* enemy)
+{
+int a=t->getx();
+int b=t->gety();
+int c=enemy->gx();
+int d=enemy->gsx();
+int h=enemy->gsy();
+int e=enemy->gy();
+if((a>=c-d) && (a<=c+d) && (b>e-h) && (b<e+h))
+    shot=true;
+t->Move(tool->StoI(i->GetValue()));
+t->draw();
 }
 std::string Tank::GetValue()
 {
-    return "Alma";
+    return name->GetValue();
 }
-bool Tank::is_selected(genv::event ev)
+bool Tank::is_selected(int ex ,int ey)
 {
-    return true;
+    return false;
 }
-void Tank::setAngle(int v)
+void Tank::NoFocus()
 {
-    v=abs(v);
-    while(!(v<=90))
-          v-=90;
-    angle=-v*3.14/180;
-    std::cout<<angle<<std::endl;
+   finished=false;
+   focused=false;
+
 }
+void Tank::SetFocus()
+{
+    finished=false;
+    focused=true;
+}
+int Tank::gx(){return _x;}
+int Tank::gy(){return _y;}
+int Tank::gsx(){return _size_x;}
+int Tank::gsy(){return _size_y;}

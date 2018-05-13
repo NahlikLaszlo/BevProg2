@@ -1,8 +1,8 @@
-#include <Mywindows.hpp>
+#include "../../Toolz/src/MyWindows.h"
 
 int main()
 {
-    Mywindows *myw=new Mywindows(800,600);
-    myw->loop();
+    MyWindows *myw=new MyWindows(1366,768);
+    myw->Menu();
     return 0;
 }
