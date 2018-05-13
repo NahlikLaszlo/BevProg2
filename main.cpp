@@ -1,4 +1,4 @@
-#include "../../Toolz/src/MyWindows.h"
+#include "MyWindows.h"
 
 int main()
 {
