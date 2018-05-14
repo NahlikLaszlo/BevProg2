@@ -1,6 +1,5 @@
 #include "NumericTextbox.h"
 #include<sstream>
-#include<iostream>
 NumericTextbox::NumericTextbox(int x,int y,int minvalue,int maxvalue,std::string n, int c,char e):NumericUpDown(x,y,genv::gout.cascent()*10,5*genv::gout.cascent()/2,minvalue,maxvalue,n)
 {
 extra=e;

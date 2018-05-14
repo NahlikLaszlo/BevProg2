@@ -1,5 +1,4 @@
 #include "Button.hpp"
-#include<iostream>
 using namespace genv;
 Button::Button(int x, int y, int sx,int sy, std::string lab):Widgets(x,y,sx,sy)
 {
@@ -25,16 +24,16 @@ void Button::action(std::function<void()> Press)
 }
 void Button::draw()
 {
-    gout<<move_to(_x,_y)<<color(120,120,120)<<box(_size_x,_size_y);
-    gout<<move_to(_x+_size_x/2-gout.twidth(label->GetValue())/2,_y+_size_y/2)<<color(255,255,255)<<text(label->GetValue());
+    gout<<move_to(_x-_size_x/2,_y-_size_y/2)<<color(150,0,0)<<box(_size_x,_size_y);
+    gout<<move_to(_x-gout.twidth(label->GetValue())/2,_y)<<color(255,255,255)<<text(label->GetValue());
 }
 bool Button::is_selected(int ex, int ey)
 {
-    if((ex>_x && ex<_x+_size_x && ey>_y && ey<_y+_size_y))
+    if((ex>_x-_size_x/2 && ex<_x+_size_x/2 && ey>_y-_size_y/2 && ey<_y+_size_y/2))
     {
         focused=true;
     }
-    else if(!(ex>_x && ex<_x+_size_x && ey>_y && ey<_y+_size_y))
+    else if(!(ex>_x-_size_x/2 && ex<_x+_size_x/2 && ey>_y-_size_y/2 && ey<_y+_size_y/2))
     {
         focused=false;
     }

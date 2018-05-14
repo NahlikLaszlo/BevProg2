@@ -1,6 +1,5 @@
 #include "Textbox.hpp"
 #include<string>
-#include<iostream>
 using namespace genv;
 Textbox::Textbox(int x, int y,std::string n):Widgets(x,y,genv::gout.cascent()*10,5*genv::gout.cascent()/2)
 {

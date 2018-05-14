@@ -6,7 +6,7 @@
 class Bullett:public Widgets
 {
     public:
-        Bullett(int x, int y, int sx,int sy,int Angle,int d,int v);
+        Bullett(int x, int y, int sx,int sy,int Angle,int d,int v,int c);
         virtual void SetCostume(int n);
         virtual std::string GetValue();
         virtual bool is_selected(int ex, int ey);
@@ -27,6 +27,7 @@ class Bullett:public Widgets
         int v0;
         int angle;
         int direction;
+
 };
 
 #endif // BULLETT_H

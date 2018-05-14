@@ -1,8 +1,6 @@
 #ifndef STATICTEXT_H
 #define STATICTEXT_H
 #include"Widgets.hpp"
-#include"graphics.hpp"
-
 class StaticText:public Widgets
 {
     public:

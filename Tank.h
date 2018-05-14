@@ -6,6 +6,8 @@
 #include "Bullett.h"
 #include "Indicator.h"
 #include "Button.hpp"
+#include <cstdlib>
+#include <time.h>
 class Tank:public Widgets
 {
     public:
@@ -24,6 +26,7 @@ class Tank:public Widgets
         virtual int gy();
         virtual int gsx();
         virtual int gsy();
+        virtual void SetCostume(int i);
         bool shot;
         Bullett *t;
     protected:
@@ -38,9 +41,9 @@ class Tank:public Widgets
         NumericTextbox *n;
         Indicator *i;
         Button *b;
+        NumericUpDown *u;
         int windows_width;
         int windows_height;
-
 
 
 };
