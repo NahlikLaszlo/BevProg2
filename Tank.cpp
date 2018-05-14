@@ -81,7 +81,7 @@ void Tank::handle(genv::event ev)
     if(focused)
     {
     srand(time(nullptr));
-    if(ev.keycode==key_right && _x<windows_width-_size_x)
+    if(ev.keycode==key_right && _x<windows_width-_size_x  )
         _x+=5;
     if(ev.keycode==key_left && _x>2*_size_x)
         _x-=5;
