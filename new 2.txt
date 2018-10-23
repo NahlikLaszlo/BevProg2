@@ -6,8 +6,6 @@
 
 #include "exceptions.hpp"
 
-// using namespace std; -- ezt header fájlban nem használjuk, inkább kiírjuk, hogy std::cout, std::ostream, stb.
-
 //
 // AVL fa osztály
 // DEFINÍCIÓ
@@ -41,7 +39,7 @@ private:
         }
 
     private:
-        // Segédfüggvény NIL Node-ok magasságához
+        // Segédfüggvény NULL Node-ok magasságához
         static int _height(const Node *x)
         {
             return (x == nullptr) ? 0 : x->height;
@@ -64,7 +62,7 @@ private:
     std::ostream& _preorder(Node* i, std::ostream& o);
     std::ostream& _postorder(Node* i, std::ostream& o);
 
-    size_t _size(Node *x) const;
+    std::size_t _size(Node *x) const;
 
     // Új kereső segédfüggvény
     Node *_find(const T & key) const;
@@ -77,22 +75,19 @@ private:
     // Ellenõrzõ segédfüggvény
     void _validate_avl(Node *x) const;
 
-    //Másoló konstruktor és értékadás operátor segédfügggvényei
-    Node *getroot() const;
-    Node *copyOf( Node* n, Node* p );
-
 public:
     // Konstruktor és destruktor
     avl_tree() : root(nullptr) {}
     ~avl_tree() { _destroy(root); }
 
-    // Másoló konstruktor és értékadás operátor -- segédfüggvények privateban
+    // Másoló konstruktor és értékadás operátor, valamint segéd függgvényeik
     avl_tree(const avl_tree<T>& t);
     avl_tree& operator=(const avl_tree<T>& t);
-
+    Node *getroot() const;
+    Node* copyOf( Node* n, Node* p );
 
     // Alapmûveletek
-    size_t size() const { return _size(root); }
+    std::size_t size() const { return _size(root); }
     bool isempty() const { return root==nullptr; }
 
     bool find(const T& k) const;
@@ -119,27 +114,42 @@ public:
 template<class T>
 void avl_tree<T>::_rotate_left(Node *x)
 {
-	Node *y = x->right;
-	if(!y)
-		throw internal_error();
-	x->right=y->left;
-	if(y->left)
-		x->left->parent=x;
+	// y-nak nevezzük el x jobb gyerekét
+    // a forgatás az x-y él mentén történik
+    Node *y = x->right;
 
-	y->parent=x->parent;
-	if(!x->parent)
-	{
-		root=y;
-	}
-	else if (x==x->parent->left)
-		x->parent->left=y;
-	else
-		x->parent->right=y;
+    // y-nak mindenképpen létezõ csúcsnak kell lennie
+    if (y == nullptr)
+    {
+        throw internal_error();
+    }
+    // y bal gyereke forgatás után x jobb gyereke lesz
+    // a gyerek szülõ mezõjét is frissíteni kell
+    x->right = y->left;
+    if (y->left != nullptr)
+    {
+        y->left->parent = x;
+    }
+    // az adott részfának mostantól y lesz a gyökere
+    // így megkapja x szülõjét, és
+    // a szülõnél is be kell állítani, hogy mostantól y az õ gyereke
+    y->parent = x->parent;
+    if (x->parent == nullptr)
+    {
+        root = y;
+    }
+    else if (x == x->parent->left)
+    {
+        x->parent->left = y;
+    }
+    else
+    {
+        x->parent->right = y;
+    }
 
-	y->left=x;
-	x->parent=y;
-
-
+    // végül beállítjuk x és y között a szülõ-gyerek kapcsolatot
+    y->left = x;
+    x->parent = y;
 }
 
 // Jobbra forgatás ...
@@ -149,25 +159,42 @@ void avl_tree<T>::_rotate_left(Node *x)
 template<class T>
 void avl_tree<T>::_rotate_right(Node *x)
 {
-	Node *y = x->left;
-if(!y)
-	throw internal_error();
-x->left=y->right;
-if(y->right)
-	x->right->parent=x;
+	// y-nak nevezzük el x bal gyerekét
+    // a forgatás az x-y él mentén történik
+    Node *y = x->left;
 
-y->parent=x->parent;
-if(!x->parent)
-{
-	root=y;
-}
-else if (x==x->parent->left)
-	x->parent->right=y;
-else
-	x->parent->left=y;
+    // y-nak mindenképpen létezõ csúcsnak kell lennie
+    if (y == nullptr)
+    {
+        throw internal_error();
+    }
+    // y jobb gyereke forgatás után x bal gyereke lesz
+    // a gyerek szülõ mezõjét is frissíteni kell
+    x->left = y->right;
+    if (y->right != nullptr)
+    {
+        y->right->parent = x;
+    }
+    // az adott részfának mostantól y lesz a gyökere
+    // így megkapja x szülõjét, és
+    // a szülõnél is be kell állítani, hogy mostantól y az õ gyereke
+    y->parent = x->parent;
+    if (x->parent == nullptr)
+    {
+        root = y;
+    }
+    else if (x == x->parent->left)
+    {
+        x->parent->left = y;
+    }
+    else
+    {
+        x->parent->right = y;
+    }
 
-y->right=x;
-x->parent=y;
+    // végül beállítjuk x és y között a szülõ-gyerek kapcsolatot
+    y->right = x;
+    x->parent = y;
 }
 
 // Az újrakiegyensúlyozó függvény
@@ -180,45 +207,99 @@ x->parent=y;
 // fa tulajdonságait.
 //
 // Pontos elõfeltételek:
-// x NIL, vagy
+// x NULL, vagy
 // x mindkét részfája érvényes, kiegyensúlyozott AVL fa helyes magasságértékekkel
 // (üres részfa is helyes AVL fa)
 template<class T>
-void avl_tree<T>::_rebalance(Node * x)
+void avl_tree<T>::_rebalance(Node *x)
 {
-	while(x!=nullptr)
-	{
-		int old_height=x->height;
-		if(x->balance_factor()==2)
-		{
-			Node* y=x->right;
-			if(y->balance_factor()==-1)
-			{
-				_rotate_right(y);
-				y->update_height();
-			}
-			_rotate_left(x);
-			x->update_height();
-			x=x->parent;
-		}
-		else if(x->balance_factor()==-2)
-		{
-			Node*y=x->left;
-			if(y->balance_factor()==1)
-			{
-				_rotate_left(y);
-				y->update_height();
-			}
-			_rotate_right(x);
-			x->update_height();
-			x=x->parent;
-		}
-		x->update_height();
-		if(x->height==old_height)
-			break;
-		x=x->parent;
-	}
+	// Ciklusinvariáns (a feltétel fennáll a ciklus minden futásának kezdetén):
+    // x nil, vagy
+    // x mindkét részfája érvényes, kiegyensúlyozott AVL fa helyes magasságértékekkel
+    // (üres részfa is helyes AVL fa)
+    while (x != nullptr)
+    {
+        // Lementjük a részfa régi magasságát, mert késõbb el kell döntenünk,
+        // hogy változott-e, és kell-e feljebb menni a fában a kiegyensúlyozással.
+        //
+        // Érdemes külön változóba menteni, ahelyett hogy az x->height módosításaira
+        // figyelnénk, mivel ha forgatás történik, akkor már nem az x csúcs lesz
+        // a kiegyensúlyozott részfa gyökere.
+        int old_height = x->height;
 
+        // Ha a bal és a jobb részfa magassága kettõvel különbözik,
+        // akkor sérül az AVL fa tulajdonság, és kiegyensúlyozás kell a helyreállításhoz.
+        //
+        // Ha a jobb részfa a magasabb ...
+        if (x->balance_factor() == 2)
+        {
+            // Megállapítjuk, hogy a (++,0+) vagy a (++,-) eset áll fenn
+            // (x jobb gyerekét nevezzük y-nak)
+            Node *y = x->right;
+            if (y->balance_factor() == -1)
+            {
+                // (++,-) eset
+                // y bal gyereke a "túlsúlyos"
+
+                // elsõ forgatás - y körül jobbra
+                _rotate_right(y);
+                // frissítjük az alacsonyabb szintre került y magasság mezõjét
+                y->update_height();
+
+                // x és x új jobb gyerekének magasságát még felesleges frissíteni,
+                // mert közöttük lesz még egy forgatás
+            }
+
+            // (++,0+) eset VAGY (++,-) eset második forgatása
+            // (mindkettõ x körüli balra forgatás)
+
+            _rotate_left(x);
+
+            // frissítjük az alacsonyabb szintre került x magasság mezõjét
+            x->update_height();
+
+            // forgatás után már nem x a részfa gyökere, hanem y, amely már x szülõje
+            // x-et a részfa gyökerére állítjuk
+            x = x->parent;
+        }
+        // Ha a bal részfa a magasabb ...
+        // (minden lépés az elõzõvel analóg)
+        else if (x->balance_factor() == -2)
+        {
+            Node *y = x->left;
+            if (y->balance_factor() == 1)
+            {
+                _rotate_left(y);
+                y->update_height();
+            }
+
+            _rotate_right(x);
+            x->update_height();
+            x = x->parent;
+        }
+
+        // Akár történtek forgatások, akár nem, most x mindenképpen a részfa gyökerére
+        // mutat, és egyedül x magasság mezõjét lehet még szükséges frissíteni
+        x->update_height();
+
+        // Mivel feltételezzük, hogy a fában eredetileg csak egy ponton történt módosítás
+        // (beszúrás vagy törlés), és ez a pont ebben a részfában volt valahol, akkor ha
+        // ezen részfa magassága nem változott, akkor már a fa egésze kiegyensúlyozott.
+        if (x->height == old_height)
+        {
+            break;
+        }
+        // Ha az elõbbi feltétel nem teljesül, úgy folytatjuk a kiegyensúlyozást eggyel
+        // magasabb szinten.
+        // Ez a részfa már kiegyensúlyozott, a testvér részfa pedig nem változott az
+        // elõzõ kiegyensúlyozás óta, így a ciklusinvariáns megmarad.
+        x = x->parent;
+    }
+
+    // Ha ide elértünk, akkor vagy break-kel kiléptünk a ciklusból, mert
+    // már nincs szükség további kiegyensúlyozásra, vagy felfelé haladva
+    // kiegyensúlyoztuk a teljes fát, és a gyökértõl felfelé haladva
+    // nil-re léptünk.
 }
 
 // Rekurzívan felszabadítja a csúcsokat.
@@ -276,12 +357,13 @@ avl_tree<T>& avl_tree<T>::operator=(const avl_tree<T>& t) {
 
 }
 
+
 // Visszaadja az x gyökerű részfa legkisebb értékű csúcsát.
 // Előfeltétel: x != nil
 template<class T>
 typename avl_tree<T>::Node *avl_tree<T>::_min(Node *x) const
 {
-    while (x->left != nullptr)
+    while (x->left != 0)
         x = x->left;
     return x;
 }
@@ -291,22 +373,22 @@ typename avl_tree<T>::Node *avl_tree<T>::_min(Node *x) const
 template<class T>
 typename avl_tree<T>::Node *avl_tree<T>::_max(Node *x) const
 {
-    while (x->right != nullptr)
+    while (x->right != 0)
         x = x->right;
     return x;
 }
 
 // Visszaadja a fából az x csúcs rákövetkezőjét,
 // vagy nil-t, ha x az legnagyobb kulcsú elem.
-// Előfeltétel: x != nil
+// Előfeltétel: x != nilif(isempty())
 template<class T>
 typename avl_tree<T>::Node *avl_tree<T>::_next(Node *x) const
 {
-    if (x->right != nullptr)
+    if (x->right != 0)
         return _min(x->right);
 
     Node *y = x->parent;
-    while (y!=nullptr && x==y->right)
+    while (y!=0 && x==y->right)
     {
         x = y;
         y = y->parent;
@@ -320,11 +402,11 @@ typename avl_tree<T>::Node *avl_tree<T>::_next(Node *x) const
 template<class T>
 typename avl_tree<T>::Node *avl_tree<T>::_prev(Node *x) const
 {
-    if (x->left != nullptr)
+    if (x->left != 0)
         return _max(x->left);
 
     Node *y = x->parent;
-    while (y!=nullptr && x==y->left)
+    while (y!=0 && x==y->left)
     {
         x = y;
         y = y->parent;
@@ -336,7 +418,7 @@ typename avl_tree<T>::Node *avl_tree<T>::_prev(Node *x) const
 // az x gyökerû részfa elemeinek számát.
 // Megjegyzés: üres fára is mûködik -> 0-t ad vissza
 template<class T>
-size_t avl_tree<T>::_size(Node *x) const
+std::size_t avl_tree<T>::_size(Node *x) const
 {
     if (x == nullptr)
         return 0;
@@ -411,7 +493,8 @@ void avl_tree<T>::insert(const T& k)
     else
         p->right = x;
 
-	p->update_height();
+    //p->update_height();
+
     // Beszúrás utáni kiegyensúlyozás
     _rebalance(p);
 }
@@ -459,7 +542,10 @@ void avl_tree<T>::remove(const T& k)
     delete y;
 
     // Törlés utáni kiegyensúlyozás
-    _rebalance(w);
+    if (w!=nullptr){
+        //w->update_height();
+        _rebalance(w);
+    }
 }
 
 // Rekurzív segédfüggvény a validate() függvényhez
@@ -530,7 +616,7 @@ template<class T>
 std::ostream& avl_tree<T>::postorder(std::ostream& o)
 {
     if(isempty()){
-    	std::cout << "A fa ures!" << std::endl;
+        std::cout << "A fa ures!" <<std::endl;
         return o;
     }
     return _postorder(root, o);
@@ -540,7 +626,7 @@ template<class T>
 std::ostream& avl_tree<T>::inorder(std::ostream& o)
 {
     if(isempty()){
-    	std::cout << "A fa ures!" << std::endl;
+    	std::cout << "A fa ures!" <<std::endl;
         return o;
     }
     return _inorder(root, o);
